@@ -1,0 +1,73 @@
+{
+  "name": "PingFederate Authentication Handler",
+  "description": "Sample Tines story that handles authentication requests from PingFederate's Tines IDP Adapter. Customize this story to add your own authentication logic, attribute enrichment, and risk assessment.",
+  "agents": [
+    {
+      "type": "Webhook",
+      "name": "Receive PingFederate Request",
+      "options": {
+        "secret": "your-secret-token-here",
+        "response_code": "200"
+      },
+      "notes": "Receives authentication context from PingFederate. Configure the same secret in your PingFederate adapter settings."
+    },
+    {
+      "type": "EventTransformation",
+      "name": "Extract User Info",
+      "options": {
+        "mode": "message_only",
+        "payload": {
+          "username": "{% if receive_pingfederate_request.body.chainedAttributes.username %}{{ receive_pingfederate_request.body.chainedAttributes.username }}{% else %}unknown{% endif %}",
+          "email": "{% if receive_pingfederate_request.body.chainedAttributes.email %}{{ receive_pingfederate_request.body.chainedAttributes.email }}{% else %}{% endif %}",
+          "client_ip": "{{ receive_pingfederate_request.body.request.remoteAddr }}",
+          "user_agent": "{{ receive_pingfederate_request.body.request.userAgent }}",
+          "application": "{{ receive_pingfederate_request.body.pingfederate.applicationName }}",
+          "target": "{{ receive_pingfederate_request.body.pingfederate.targetResource }}"
+        }
+      },
+      "notes": "Extracts key information from the PingFederate request"
+    },
+    {
+      "type": "EventTransformation",
+      "name": "Prepare Success Response",
+      "options": {
+        "mode": "message_only",
+        "payload": {
+          "status": "success",
+          "message": "User authenticated successfully via Tines",
+          "username": "{{ extract_user_info.username }}",
+          "email": "{{ extract_user_info.email }}",
+          "authenticated_at": "{{ 'now' | date: '%Y-%m-%dT%H:%M:%SZ' }}",
+          "department": "Engineering",
+          "role": "user",
+          "groups": ["authenticated-users"]
+        }
+      },
+      "notes": "Prepares the response to send back to PingFederate. Customize the attributes returned here."
+    }
+  ],
+  "links": [
+    {
+      "source": "Receive PingFederate Request",
+      "target": "Extract User Info"
+    },
+    {
+      "source": "Extract User Info",
+      "target": "Prepare Success Response"
+    }
+  ],
+  "usage_notes": [
+    "1. Import this story into your Tines tenant",
+    "2. Update the webhook secret to match your PingFederate adapter configuration",
+    "3. Copy the webhook URL and paste it into the PingFederate adapter settings",
+    "4. Customize the 'Prepare Success Response' action to return the attributes you need",
+    "5. Add additional actions for attribute lookup, risk assessment, etc."
+  ],
+  "customization_ideas": [
+    "Add an HTTP Request action to lookup user attributes from Active Directory or LDAP",
+    "Add IP reputation checking using threat intelligence APIs",
+    "Implement adaptive MFA by returning a risk_score attribute",
+    "Add audit logging by sending events to your SIEM",
+    "Integrate with your HR system to get department and manager info"
+  ]
+}
