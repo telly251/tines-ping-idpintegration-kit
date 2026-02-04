@@ -21,16 +21,18 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
-        <pingfederate.version>12.3.0</pingfederate.version>
+        <!-- Override this with -Dpf.home="path" if your PingFederate is installed elsewhere -->
+        <pf.home>C:/Program Files/Ping Identity/pingfederate-12.3.0</pf.home>
     </properties>
 
     <dependencies>
-        <!-- PingFederate SDK - provided at runtime by PingFederate -->
+        <!-- PingFederate SDK - using system scope to reference directly from PF installation -->
         <dependency>
             <groupId>com.pingidentity.pingfederate</groupId>
             <artifactId>pf-protocolengine</artifactId>
-            <version>${pingfederate.version}</version>
-            <scope>provided</scope>
+            <version>12.3.0</version>
+            <scope>system</scope>
+            <systemPath>${pf.home}/pingfederate/server/default/lib/pf-protocolengine.jar</systemPath>
         </dependency>
 
         <!-- Servlet API - provided at runtime -->
@@ -113,7 +115,7 @@
                         <configuration>
                             <artifactSet>
                                 <excludes>
-                                    <!-- Exclude provided dependencies -->
+                                    <!-- Exclude provided/system dependencies -->
                                     <exclude>com.pingidentity.pingfederate:*</exclude>
                                     <exclude>javax.servlet:*</exclude>
                                     <exclude>org.slf4j:*</exclude>
