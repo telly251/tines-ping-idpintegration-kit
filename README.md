@@ -13,56 +13,113 @@ A PingFederate Identity Provider (IDP) adapter that integrates with the Tines or
 
 ## Prerequisites
 
-- PingFederate 11.x or later
+- PingFederate 11.x or later (tested with 12.3.0)
 - Java 11 or later
 - Maven 3.6 or later
 - A Tines tenant with webhook capabilities
 
 ## Building the Adapter
 
-### Option 1: Using Maven (Recommended)
+### Important: PingFederate SDK Location
+
+The adapter requires the **PingFederate SDK JAR** (`pf-sdk.jar`) which contains the adapter API classes. This JAR is located in the **SDK folder** of your PingFederate installation:
+
+```
+<PF_HOME>/pingfederate/sdk/pf-sdk.jar
+```
+
+**Note:** Do NOT use `pf-protocolengine.jar` from the lib folder - that JAR does not contain the adapter development classes.
+
+### Option 1: Windows (Recommended)
+
+Use the provided deployment script which handles everything automatically:
+
+```cmd
+deploy-windows.bat
+```
+
+The script will:
+1. Install the PingFederate SDK to your Maven repository
+2. Build the adapter
+3. Deploy the JAR to PingFederate
+
+### Option 2: Manual Build (Linux/Mac)
 
 1. First, install the PingFederate SDK JAR to your local Maven repository:
 
 ```bash
-# Copy pf-protocolengine.jar from your PingFederate installation
-# Located at: <PF_INSTALL>/pingfederate/server/default/lib/pf-protocolengine.jar
+# The SDK JAR is located at: <PF_HOME>/pingfederate/sdk/pf-sdk.jar
 
 mvn install:install-file \
-  -Dfile=/path/to/pf-protocolengine.jar \
+  -Dfile="/path/to/pingfederate/sdk/pf-sdk.jar" \
   -DgroupId=com.pingidentity.pingfederate \
-  -DartifactId=pf-protocolengine \
-  -Dversion=11.3.0 \
-  -Dpackaging=jar
+  -DartifactId=pf-sdk \
+  -Dversion=12.3.0 \
+  -Dpackaging=jar \
+  -DgeneratePom=true
 ```
 
 2. Build the adapter:
 
 ```bash
-mvn clean package
+mvn clean package -Dpf.home="/path/to/pingfederate-12.3.0"
 ```
 
 3. The built JAR will be at: `target/tines-idp-adapter-1.0.0.jar`
 
-### Option 2: Using the provided build script
+### Option 3: Manual Build (Windows)
 
-```bash
-./build.sh
+```cmd
+REM Install SDK to Maven (run from Command Prompt as Administrator)
+mvn install:install-file ^
+  -Dfile="C:\Program Files\Ping Identity\pingfederate-12.3.0\pingfederate\sdk\pf-sdk.jar" ^
+  -DgroupId=com.pingidentity.pingfederate ^
+  -DartifactId=pf-sdk ^
+  -Dversion=12.3.0 ^
+  -Dpackaging=jar ^
+  -DgeneratePom=true
+
+REM Build the adapter
+mvn clean package -Dpf.home="C:\Program Files\Ping Identity\pingfederate-12.3.0"
 ```
 
 ## Installation
 
+### Linux/Mac
+
 1. Copy the built JAR file to your PingFederate server:
 
 ```bash
-cp target/tines-idp-adapter-1.0.0.jar <PF_INSTALL>/pingfederate/server/default/deploy/
+cp target/tines-idp-adapter-1.0.0.jar <PF_HOME>/pingfederate/server/default/deploy/
 ```
 
 2. Restart PingFederate:
 
 ```bash
-<PF_INSTALL>/pingfederate/bin/run.sh restart
+<PF_HOME>/pingfederate/bin/run.sh restart
 ```
+
+### Windows
+
+1. Copy the built JAR file to the deploy directory:
+
+```cmd
+copy target\tines-idp-adapter-1.0.0.jar "C:\Program Files\Ping Identity\pingfederate-12.3.0\pingfederate\server\default\deploy\"
+```
+
+2. Restart PingFederate (choose one method):
+
+   **Using Windows Services:**
+   ```cmd
+   net stop PingFederate
+   net start PingFederate
+   ```
+
+   **Using batch files:**
+   ```cmd
+   "C:\Program Files\Ping Identity\pingfederate-12.3.0\pingfederate\bin\shutdown.bat"
+   "C:\Program Files\Ping Identity\pingfederate-12.3.0\pingfederate\bin\run.bat"
+   ```
 
 ## Configuration
 
@@ -237,20 +294,43 @@ Enable debug logging for the adapter by adding to `<PF_INSTALL>/pingfederate/ser
 
 ### Common Issues
 
-**1. Adapter not appearing in dropdown**
+**1. Build fails with "package com.pingidentity.sdk does not exist"**
+
+This error means you're using the wrong JAR file. The classes are in `pf-sdk.jar`, NOT `pf-protocolengine.jar`.
+
+**Solution:**
+- Locate the SDK JAR at: `<PF_HOME>/pingfederate/sdk/pf-sdk.jar`
+- Clean your Maven cache: `rmdir /s /q %USERPROFILE%\.m2\repository\com\pingidentity` (Windows)
+- Reinstall the SDK using the correct JAR path
+
+**2. Build fails with "Could not find artifact com.pingidentity..."**
+
+Maven can't find the PingFederate SDK in any repository.
+
+**Solution:**
+- The PingFederate SDK is not published to Maven Central
+- You must manually install it to your local repository
+- Run the `mvn install:install-file` command from the build instructions
+
+**3. Adapter not appearing in dropdown**
 - Ensure the JAR is in the `deploy/` directory
 - Check that PingFederate was restarted
 - Look for class loading errors in `server.log`
 
-**2. Webhook connection failures**
+**4. Webhook connection failures**
 - Verify the webhook URL is accessible from PingFederate
 - Check firewall rules and proxy settings
 - Ensure SSL certificates are valid
 
-**3. Authentication failures**
+**5. Authentication failures**
 - Check the Tines response format matches expected structure
 - Verify the `status` field is set to `success`
 - Review PingFederate logs for detailed error messages
+
+**6. Windows: "Error writing temporary POM file" during install:install-file**
+- Run Command Prompt as Administrator
+- Ensure the TEMP directory exists and is writable
+- Try: `set TEMP=%USERPROFILE%\AppData\Local\Temp` before running Maven
 
 ## Security Considerations
 

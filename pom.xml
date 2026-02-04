@@ -26,13 +26,14 @@
     </properties>
 
     <dependencies>
-        <!-- PingFederate SDK - using system scope to reference directly from PF installation -->
+        <!-- PingFederate SDK - contains adapter API classes (IdpAuthenticationAdapterV2, etc.) -->
+        <!-- The SDK JAR is located in: <PF_HOME>/pingfederate/sdk/pf-sdk.jar -->
         <dependency>
             <groupId>com.pingidentity.pingfederate</groupId>
-            <artifactId>pf-protocolengine</artifactId>
+            <artifactId>pf-sdk</artifactId>
             <version>12.3.0</version>
             <scope>system</scope>
-            <systemPath>${pf.home}/pingfederate/server/default/lib/pf-protocolengine.jar</systemPath>
+            <systemPath>${pf.home}/pingfederate/sdk/pf-sdk.jar</systemPath>
         </dependency>
 
         <!-- Servlet API - provided at runtime -->
@@ -115,8 +116,8 @@
                         <configuration>
                             <artifactSet>
                                 <excludes>
-                                    <!-- Exclude provided/system dependencies -->
-                                    <exclude>com.pingidentity.pingfederate:*</exclude>
+                                    <!-- Exclude provided/system dependencies (these are provided by PingFederate at runtime) -->
+                                    <exclude>com.pingidentity.pingfederate:pf-sdk</exclude>
                                     <exclude>javax.servlet:*</exclude>
                                     <exclude>org.slf4j:*</exclude>
                                 </excludes>
