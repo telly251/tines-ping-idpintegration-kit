@@ -159,13 +159,4 @@
             </plugin>
         </plugins>
     </build>
-
-    <!-- Repository for PingFederate SDK -->
-    <repositories>
-        <repository>
-            <id>local-pf-sdk</id>
-            <name>Local PingFederate SDK</name>
-            <url>file://${project.basedir}/lib</url>
-        </repository>
-    </repositories>
 </project>
